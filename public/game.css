@@ -1,0 +1,204 @@
+:root {
+    /* 緑色のマスに関する定数 */
+    --cell-size: 80px;  /* 大きさ */
+    --cell-color: hsl(119, 23%, 60%);   /* デフォルトの色 */
+    --cell-hover-color: hsl(163, 74%, 82%); /* マウスカーソルが上にあるときの色 */
+    --cell-active-color: hsl(163, 21%, 56%); /* クリックされているときの色 */
+    --cell-border-color: hsl(97, 48%, 19%); /* 境界線の色 */
+    --cell-border-width: 2.5px; /* 境界線の幅 */
+    --cell-active-border-width: 6px;    /* クリックされているときの境界線の幅 */
+
+    /* コマに関する定数 */
+    --disk-radius: 33px;    /* 半径 */
+    --disk-thickness: 13px; /* 厚み */
+    --flip-duration: 0.4s;  /* 裏返すアニメーション時間 */
+    --face-black: hsl(0, 0%, 25%);  /* 黒面の色 */
+    --side-black: black;    /* 側面の黒側の色 */
+    --face-white: white;    /* 白面の色 */
+    --side-white: hsl(0, 0%, 75%);  /* 側面の白側の色 */
+}
+
+div.board {
+    display: grid;
+    grid-template-columns: repeat(8, var(--cell-size));
+}
+
+.cell svg {
+    vertical-align: bottom;
+    width: var(--cell-size);
+    height: var(--cell-size);
+}
+
+/* 緑色のマス */
+.cell .cellbg {
+    x: 0;
+    y: 0;
+    width: var(--cell-size);
+    height: var(--cell-size);
+    fill: var(--cell-color);
+    stroke: var(--cell-border-color);
+    stroke-width: var(--cell-border-width);
+}
+
+.cell:hover .cellbg {
+    fill: var(--cell-hover-color);
+}
+
+.cell:active .cellbg {
+    fill: var(--cell-active-color);
+    stroke-width: var(--cell-active-border-width);
+}
+
+/* コマ */
+.cell .disk {
+    /* デフォルトだとコマがマスの左上に配置されるため、マスの中心にずらす */
+    transform: translate(calc(var(--cell-size) * 0.5), calc(var(--cell-size) * 0.5));
+}
+
+.cell .disk ellipse {
+    cx: 0;
+    cy: 0;
+    rx: var(--disk-radius);
+    ry: var(--disk-radius);
+}
+
+.cell .disk rect {
+    x: calc(-1 * var(--disk-radius));
+    y: 0;
+    width: calc(2 * var(--disk-radius));
+    height: 0;
+}
+
+/* .cell：1マスを表す */
+/* .cell.black：黒コマが置かれたマス */
+/* .cell.white：白コマが置かれたマス */
+/* .cell:not(.black,.white)：黒コマも白コマも置かれていないマス */
+
+.cell:not(.black,.white) .disk {
+    display: none;  /* 何も置かれてなければ.diskクラス要素（＝コマ）を表示しない */
+}
+
+.cell.black .disk .face {
+    fill: var(--face-black);    /* 黒色のコマ */
+}
+
+.cell.white .disk .face {
+    fill: var(--face-white);    /* 白色のコマ */
+}
+
+/* .flipped：裏返されたコマ */
+/* flippedクラスが追加されるとコマが裏返るアニメーションが行われる */
+
+.cell.black.flipped .disk .downside {
+    /* 裏返して黒になるコマの色を変えるアニメーション1 */
+    /* 　コマの側面の裏面に近い部分を黒から白にする */
+    animation: 
+        switch-side-color var(--flip-duration) steps(2, jump-none);
+}
+
+.cell.black.flipped .disk .upside {
+    /* 裏返して黒になるコマの色を変えるアニメーション2 */
+    /* 　コマの側面の表面に近い部分を白から黒にする */
+    animation:
+        switch-side-color var(--flip-duration) steps(2, jump-none) reverse;
+}
+
+.cell.black.flipped .disk .face {
+    /* 裏返して黒になるコマの色を変えるアニメーション3 */
+    /* 　コマの表面を白から黒にする */
+    animation: 
+        switch-face-color var(--flip-duration) steps(2, jump-none);
+}
+
+.cell.white.flipped .disk .downside {
+    /* 裏返して白になるコマの色を変えるアニメーション1 */
+    /* 　コマの側面の裏面に近い部分を白から黒にする */
+    animation: 
+        switch-side-color var(--flip-duration) steps(2, jump-none) reverse;
+}
+
+.cell.white.flipped .disk .upside {
+    /* 裏返して白になるコマの色を変えるアニメーション2 */
+    /* 　コマの側面の表面に近い部分を黒から白にする */
+    animation:
+        switch-side-color var(--flip-duration) steps(2, jump-none);
+}
+
+.cell.white.flipped .disk .face {
+    /* 裏返して白になるコマの色を変えるアニメーション3 */
+    /* 　コマの表面を黒から白にする */
+    animation: 
+        switch-face-color var(--flip-duration) steps(2, jump-none) reverse;
+}
+
+@keyframes switch-side-color {
+    0% { fill: var(--side-black) }
+    100% { fill: var(--side-white) }
+}
+
+@keyframes switch-face-color {
+    0% { fill: var(--face-white) }
+    100% { fill: var(--face-black) }
+}
+
+/* 裏返すコマの変形アニメーション */
+.cell.flipped .disk .downside ellipse {
+    animation: 
+        ellipse-cy-up calc(0.5 * var(--flip-duration)) ease-out 0s,
+        ellipse-cy-down calc(0.5 * var(--flip-duration)) ease-in calc(0.5 * var(--flip-duration)) reverse,
+        ellipse-ry calc(0.5 * var(--flip-duration)) ease-in 0s,
+        ellipse-ry calc(0.5 * var(--flip-duration)) ease-in calc(0.5 * var(--flip-duration)) reverse;
+}
+
+.cell.flipped .disk .downside rect {
+    animation:
+        rect-height calc(0.5 * var(--flip-duration)) ease-out,
+        rect-height calc(0.5 * var(--flip-duration)) ease-out calc(0.5 * var(--flip-duration)) reverse,
+        rect-y calc(0.5 * var(--flip-duration)) ease-out;
+}
+
+.cell.flipped .disk .upside ellipse {
+    animation:
+        ellipse-ry calc(0.5 * var(--flip-duration)) ease-in 0s,
+        ellipse-ry calc(0.5 * var(--flip-duration)) ease-in calc(0.5 * var(--flip-duration)) reverse;
+}
+
+.cell.flipped .disk .upside rect {
+    animation:
+        rect-height calc(0.5 * var(--flip-duration)) ease-out,
+        rect-height calc(0.5 * var(--flip-duration)) ease-out calc(0.5 * var(--flip-duration)) reverse,
+        rect-y calc(0.5 * var(--flip-duration)) ease-out calc(0.5 * var(--flip-duration)) reverse;
+}
+
+.cell.flipped .disk .face ellipse{
+    animation: 
+        ellipse-cy-down calc(0.5 * var(--flip-duration)) ease-out 0s,
+        ellipse-cy-up calc(0.5 * var(--flip-duration)) ease-in calc(0.5 * var(--flip-duration)) reverse,
+        ellipse-ry calc(0.5 * var(--flip-duration)) ease-in 0s,
+        ellipse-ry calc(0.5 * var(--flip-duration)) ease-in calc(0.5 * var(--flip-duration)) reverse;
+}
+
+@keyframes ellipse-cy-up {
+    0% { cy: 0; }
+    100% { cy: calc(-0.5 * var(--disk-thickness)); }
+}
+
+@keyframes ellipse-cy-down {
+    0% { cy: 0; }
+    100% { cy: calc(0.5 * var(--disk-thickness)); }
+}
+
+@keyframes ellipse-ry {
+    0% { ry: var(--disk-radius); }
+    100% { ry: 0; }
+}
+
+@keyframes rect-height {
+    0% { height: 0; }
+    100% { height: calc(0.5 * var(--disk-thickness)); }
+}
+
+@keyframes rect-y {
+    0% { y: 0; }
+    100% { y: calc(-0.5 * var(--disk-thickness)); }    
+}
