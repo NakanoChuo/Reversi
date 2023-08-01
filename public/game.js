@@ -113,6 +113,10 @@ class Screen {
         if (prevColor === Reversi.NONE) {
             cell.className = `cell ${color}`;
         } else {
+            // cell.className = `cell ${color} flipped`だけだと
+            // コマを裏返すCSSアニメーションが一度（flippedが追加されたとき）だけしか実行されない
+            // そのため、一度flippedをクラスから外し、flippedを追加して再描画させる必要がある。
+            // 参考：https://developer.mozilla.org/ja/docs/Web/CSS/CSS_animations/Tips#再度アニメーションを実行する
             cell.className = `cell ${prevColor}`;
             window.requestAnimationFrame(function(time) {
                 window.requestAnimationFrame(function(time) {
