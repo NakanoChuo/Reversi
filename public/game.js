@@ -16,51 +16,30 @@ class Reversi {
         this.screen = new Screen();
         this.board = new Board(this.screen);
         this.board.initialize();
-        this.turn = Reversi.BLACK;
-        this.screen.showMessage(`${this.turn == Reversi.BLACK ? '黒' : '白'}の手番`);
     }
 
     setPlayers(player1, player2) {
-        this.players = [player1, player2];
-        player1.initialize(this, Reversi.BLACK);
-        player2.initialize(this, Reversi.WHITE);
+        this.players = {
+            [Reversi.BLACK]: player1,
+            [Reversi.WHITE]: player2
+        };
+        for (let color in this.players) {
+            this.players[color].initialize(color);
+        }
     }
 
-    putDisk(col, row, color) {
-        this.hasFlipped = false;    // flipDiskRecursivelyメソッドでコマを裏返したかどうかを記録
-        if (this.board.get(col, row) != Reversi.NONE) { return; }
+    async play() {
+        this.turn = Reversi.BLACK;
+        let col, row;
+        while (true) {
+            this.screen.showMessage(`${this.turn == Reversi.BLACK ? '黒' : '白'}の手番`);
 
-        // 8方向について裏返せるなら裏返していく
-        for (let dirCol of [-1, 0, 1]) {
-            for (let dirRow of [-1, 0, 1]) {
-                if (dirCol == 0 && dirRow == 0) { continue; }
-                this.flipDiskRecursively(col, row, dirCol, dirRow, color);
+            [col, row] = await this.players[this.turn].getChoice(col, row, this.board);
+
+            if (this.board.putDisk(col, row, this.turn)) {
+                this.turn = Reversi.getReverseColor(this.turn);
             }
         }
-        if (this.hasFlipped) {
-            // コマが裏返せるなら、その場所に置けるため置く
-            this.board.set(col, row, color);
-            this.turn = Reversi.getReverseColor(this.turn);
-            this.screen.showMessage(`${this.turn == Reversi.BLACK ? '黒' : '白'}の手番`);
-        }
-    }
-
-    // (dirCol, dirRow)の方向に裏返せるなら裏返していく
-    // colorは初めに置いたコマの色
-    flipDiskRecursively(col, row, dirCol, dirRow, color) {
-        col += dirCol;
-        row += dirRow;
-        if (this.board.get(col, row) == Reversi.NONE) { return false; }
-        if (this.board.get(col, row) == color) { return true; }
-        if (
-            this.board.get(col, row) == Reversi.getReverseColor(color)      // 現在注目しているコマが、初めに置いたコマと違う色
-            && this.flipDiskRecursively(col, row, dirCol, dirRow, color)    // かつ、その先に初めに置いたコマと同じ色のコマがある場合
-        ) {
-            this.board.set(col, row, color);                                // 現在注目しているコマを裏返す。
-            this.hasFlipped = true;
-            return true;
-        }
-        return false;
     }
 }
 
@@ -98,6 +77,43 @@ class Board {
         if (!this.checkValidIndices(col, row)) { return; }
         this.screen.update(col, row, this.array2d[col][row], color);    // Screenオブジェクトに画面更新を指示
         this.array2d[col][row] = color;
+    }
+
+    putDisk(col, row, color) {
+        this.hasFlipped = false;    // flipDiskRecursivelyメソッドでコマを裏返したかどうかを記録
+        if (this.get(col, row) != Reversi.NONE) { return; }
+
+        // 8方向について裏返せるなら裏返していく
+        for (let dirCol of [-1, 0, 1]) {
+            for (let dirRow of [-1, 0, 1]) {
+                if (dirCol == 0 && dirRow == 0) { continue; }
+                this.flipDiskRecursively(col, row, dirCol, dirRow, color);
+            }
+        }
+        if (this.hasFlipped) {
+            // コマが裏返せるなら、その場所に置けるため置く
+            this.set(col, row, color);
+        }
+
+        return this.hasFlipped;
+    }
+
+    // (dirCol, dirRow)の方向に裏返せるなら裏返していく
+    // colorは初めに置いたコマの色
+    flipDiskRecursively(col, row, dirCol, dirRow, color) {
+        col += dirCol;
+        row += dirRow;
+        if (this.get(col, row) == Reversi.NONE) { return false; }
+        if (this.get(col, row) == color) { return true; }
+        if (
+            this.get(col, row) == Reversi.getReverseColor(color)      // 現在注目しているコマが、初めに置いたコマと違う色
+            && this.flipDiskRecursively(col, row, dirCol, dirRow, color)    // かつ、その先に初めに置いたコマと同じ色のコマがある場合
+        ) {
+            this.set(col, row, color);                                // 現在注目しているコマを裏返す。
+            this.hasFlipped = true;
+            return true;
+        }
+        return false;
     }
 }
 
@@ -143,14 +159,12 @@ class Screen {
 
 // 入力を受け取るクラス
 class Player {
-    initialize(reversi, color) {
-        this.reversi = reversi;
+    initialize(color) {
         this.color = color;
     };
 
-    putDisk(col, row) {
-        if (this.reversi.turn != this.color) { return; }
-        this.reversi.putDisk(col, row, this.color);
+    getChoice(prevCol, prevRow, board) {
+        throw Error(`${this.getChoice.name} is not implemented.`);
     }
 }
 
@@ -158,13 +172,20 @@ class Player {
 class Controller extends Player {
     constructor() {
         super();
+        this.onClick = () => {};
         for (let cell of document.getElementsByClassName('cell')) {
             cell.addEventListener('click', event => {
                 const cell = event.currentTarget;
                 const col = Number(cell.id) % Reversi.COL_COUNT;
                 const row = Math.floor(Number(cell.id) / Reversi.COL_COUNT);
-                this.putDisk(col, row);
+                this.onClick([col, row]);
             });
         }
+    }
+
+    getChoice() {
+        return new Promise(resolve => {
+            this.onClick = resolve;
+        });
     }
 }
