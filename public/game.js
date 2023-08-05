@@ -15,7 +15,6 @@ class Reversi {
     constructor() {
         this.board = new Board();
         this.board.initialize();
-        this.controller = new Controller(this);
     }
 
     putDisk(col, row, color) {
