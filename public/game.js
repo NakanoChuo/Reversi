@@ -15,6 +15,13 @@ class Reversi {
     constructor() {
         this.board = new Board();
         this.board.initialize();
+        this.turn = Reversi.BLACK;
+    }
+
+    setPlayers(player1, player2) {
+        this.players = [player1, player2];
+        player1.initialize(this, Reversi.BLACK);
+        player2.initialize(this, Reversi.WHITE);
     }
 
     putDisk(col, row, color) {
@@ -31,6 +38,7 @@ class Reversi {
         if (this.hasFlipped) {
             // コマが裏返せるなら、その場所に置けるため置く
             this.board.set(col, row, color);
+            this.turn = Reversi.getReverseColor(this.turn);
         }
     }
 
@@ -126,26 +134,30 @@ class Screen {
     }
 }
 
-// 入力を受け取る
-class Controller {
-    constructor(reversi) {
+// 入力を受け取るクラス
+class Player {
+    initialize(reversi, color) {
         this.reversi = reversi;
+        this.color = color;
+    };
+
+    putDisk(col, row) {
+        if (this.reversi.turn != this.color) { return; }
+        this.reversi.putDisk(col, row, this.color);
+    }
+}
+
+// 画面からの入力を受け取る
+class Controller extends Player {
+    constructor() {
+        super();
         for (let cell of document.getElementsByClassName('cell')) {
             cell.addEventListener('click', event => {
                 const cell = event.currentTarget;
                 const col = Number(cell.id) % Reversi.COL_COUNT;
                 const row = Math.floor(Number(cell.id) / Reversi.COL_COUNT);
-                this.clickCell(col, row);
+                this.putDisk(col, row);
             });
-        }
-        this.color = Reversi.BLACK;
-    }
-
-    // 画面上のマスがクリックされたときのコールバック
-    clickCell(col, row) {
-        this.reversi.putDisk(col, row, this.color);
-        if (this.reversi.hasFlipped) {
-            this.color = Reversi.getReverseColor(this.color);
         }
     }
 }

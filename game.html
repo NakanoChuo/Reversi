@@ -32,7 +32,11 @@
     </div>
     <script src="public/game.js"></script>
     <script>
-        new Reversi();
+        game = new Reversi();
+        game.setPlayers(
+            new Controller(),
+            new Controller()
+        );
     </script>
 </body>
 </html>
