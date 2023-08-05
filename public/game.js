@@ -13,9 +13,11 @@ class Reversi {
     }
 
     constructor() {
-        this.board = new Board();
+        this.screen = new Screen();
+        this.board = new Board(this.screen);
         this.board.initialize();
         this.turn = Reversi.BLACK;
+        this.screen.showMessage(`${this.turn == Reversi.BLACK ? '黒' : '白'}の手番`);
     }
 
     setPlayers(player1, player2) {
@@ -39,6 +41,7 @@ class Reversi {
             // コマが裏返せるなら、その場所に置けるため置く
             this.board.set(col, row, color);
             this.turn = Reversi.getReverseColor(this.turn);
+            this.screen.showMessage(`${this.turn == Reversi.BLACK ? '黒' : '白'}の手番`);
         }
     }
 
@@ -63,12 +66,12 @@ class Reversi {
 
 // 盤面の状態を保持
 class Board {
-    constructor() {
+    constructor(screen) {
         this.array2d = new Array(Reversi.COL_COUNT);
         for (let i = 0; i < Reversi.COL_COUNT; i++) {
             this.array2d[i] = new Array(Reversi.ROW_COUNT);
         }
-        this.screen = new Screen();
+        this.screen = screen;
     }
 
     initialize() {
@@ -131,6 +134,10 @@ class Screen {
                 });
             });
         }
+    }
+
+    showMessage(message) {
+        document.getElementById('message').innerText = message;
     }
 }
 
