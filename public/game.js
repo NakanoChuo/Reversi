@@ -61,6 +61,8 @@ class Reversi {
             // プレイヤーの選択を待つ
             [col, row] = await this.players[this.turn].getChoice(col, row, this.board);
 
+            console.log(col, row, this.turn);
+
             let flipCells = placeableMap[`${col},${row}`];  // プレイヤーが選んだセルにコマを置いたとき、裏返されるコマの位置
             if (flipCells.length > 0) { // 1つでも裏返せるなら
                 this.board.set(col, row, this.turn);    // コマを置き
@@ -99,6 +101,10 @@ class Board {
             this.array2d[i] = new Array(Reversi.ROW_COUNT);
         }
         this.screen = screen;
+        this.isCalculatedPlaceable = {  // 配置可能なセルを既に計算しているかどうか
+            [Reversi.BLACK]: false,
+            [Reversi.WHITE]: false
+        };
     }
 
     initialize() {
@@ -125,6 +131,10 @@ class Board {
         if (!this.checkValidIndices(col, row)) { return; }
         this.screen.update(col, row, this.array2d[col][row], color);    // Screenオブジェクトに画面更新を指示
         this.array2d[col][row] = color;
+        this.isCalculatedPlaceable = {
+            [Reversi.BLACK]: false,
+            [Reversi.WHITE]: false
+        };
     }
 
     countDisks(color) {
@@ -138,13 +148,18 @@ class Board {
     // 戻り値は連想配列であり、これは'<数値1>,<数値2>'の文字列のキーに対して、<数値1>列・<数値2>行にコマを置いたときに
     // 裏返されるコマの位置が格納されている
     getPlaceableCells(color) {
-        let placeableMap = {};
+        if (this.isCalculatedPlaceable[color]) {    // 既に配置可能なセルが計算されていたなら
+            return this.placeableMap;               // 再計算はせず、前の計算結果を返す
+        }
+        this.isCalculatedPlaceable[color] = true;
+
+        this.placeableMap = {};
         for (let col of this.array2d.keys()) {
             for (let row of this.array2d[col].keys()) {
-                placeableMap[`${col},${row}`] = this.countFlipCells(col, row, color);
+                this.placeableMap[`${col},${row}`] = this.countFlipCells(col, row, color);
             }
         }
-        return placeableMap;
+        return this.placeableMap;
     }
 
     // col列、row行にcolorの色のコマを置いたときに裏返されるコマの位置の配列を返す
@@ -231,38 +246,5 @@ class Screen {
         for (let [col, row] of cells) {
             document.getElementById(String(row * Reversi.COL_COUNT + col)).classList.add('placeable');
         }
-    }
-}
-
-// 入力を受け取るクラス
-class Player {
-    initialize(color) {
-        this.color = color;
-    };
-
-    getChoice(prevCol, prevRow, board) {
-        throw Error(`${this.getChoice.name} is not implemented.`);
-    }
-}
-
-// 画面からの入力を受け取る
-class Controller extends Player {
-    constructor() {
-        super();
-        this.onClick = () => {};
-        for (let cell of document.getElementsByClassName('cell')) {
-            cell.addEventListener('click', event => {
-                const cell = event.currentTarget;
-                const col = Number(cell.id) % Reversi.COL_COUNT;
-                const row = Math.floor(Number(cell.id) / Reversi.COL_COUNT);
-                this.onClick([col, row]);
-            });
-        }
-    }
-
-    getChoice() {
-        return new Promise(resolve => {
-            this.onClick = resolve;
-        });
     }
 }

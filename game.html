@@ -32,11 +32,12 @@
     </div>
     <div id="message"></div>
     <script src="/game.js"></script>
+    <script src="/player.js"></script>
     <script>
         game = new Reversi();
         game.setPlayers(
             new Controller(),
-            new Controller()
+            new WeakComputer()
         );
         game.play().then(() => {
             game.over()
