@@ -4,6 +4,7 @@
     --cell-color: hsl(119, 23%, 60%);   /* デフォルトの色 */
     --cell-hover-color: hsl(163, 74%, 82%); /* マウスカーソルが上にあるときの色 */
     --cell-active-color: hsl(163, 21%, 56%); /* クリックされているときの色 */
+    --cell-placeable-color: hsl(120, 17%, 73%);   /* 配置可能なマスの色 */
     --cell-border-color: hsl(97, 48%, 19%); /* 境界線の色 */
     --cell-border-width: 2.5px; /* 境界線の幅 */
     --cell-active-border-width: 6px;    /* クリックされているときの境界線の幅 */
@@ -41,12 +42,16 @@ div.board {
 }
 
 .cell:hover .cellbg {
-    fill: var(--cell-hover-color);
+    fill: var(--cell-hover-color)!important;
 }
 
 .cell:active .cellbg {
-    fill: var(--cell-active-color);
-    stroke-width: var(--cell-active-border-width);
+    fill: var(--cell-active-color)!important;
+    stroke-width: var(--cell-active-border-width)!important;
+}
+
+.cell.placeable .cellbg {
+    fill: var(--cell-placeable-color)
 }
 
 /* コマ */

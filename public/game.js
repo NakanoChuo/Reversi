@@ -34,9 +34,20 @@ class Reversi {
         while (true) {
             this.screen.showMessage(`${this.turn == Reversi.BLACK ? '黒' : '白'}の手番`);
 
+            let placeableMap = this.board.getPlaceableCells(this.turn);
+            this.screen.showPlaceableCells(
+                Object.keys(placeableMap)
+                    .filter(key => placeableMap[key].length > 0)
+                    .map(key => key.split(',').map(Number))
+            );
+
             [col, row] = await this.players[this.turn].getChoice(col, row, this.board);
 
-            if (this.board.putDisk(col, row, this.turn)) {
+            let flipCells = placeableMap[`${col},${row}`];
+            for (let [flipCol, flipRow] of flipCells) {
+                this.board.set(flipCol, flipRow, this.turn);
+            }
+            if (flipCells.length > 0) {
                 this.turn = Reversi.getReverseColor(this.turn);
             }
         }
@@ -79,41 +90,49 @@ class Board {
         this.array2d[col][row] = color;
     }
 
-    putDisk(col, row, color) {
-        this.hasFlipped = false;    // flipDiskRecursivelyメソッドでコマを裏返したかどうかを記録
-        if (this.get(col, row) != Reversi.NONE) { return; }
+    // コマを置くことができる位置を求める
+    // 戻り値は連想配列であり、これは'<数値1>,<数値2>'の文字列のキーに対して、<数値1>列・<数値2>行にコマを置いたときに
+    // 裏返されるコマの位置が格納されている
+    getPlaceableCells(color) {
+        let placeableMap = {};
+        for (let col of this.array2d.keys()) {
+            for (let row of this.array2d[col].keys()) {
+                placeableMap[`${col},${row}`] = this.countFlipCells(col, row, color);
+            }
+        }
+        return placeableMap;
+    }
 
-        // 8方向について裏返せるなら裏返していく
+    // col列、row行にcolorの色のコマを置いたときに裏返されるコマの位置の配列を返す
+    countFlipCells(col, row, color) {
+        if (this.get(col, row) != Reversi.NONE) { return []; }
+
+        let flipCells = []; // 裏返されるコマの位置の配列
+        // (col, row)周りの8方向について調べていく
         for (let dirCol of [-1, 0, 1]) {
             for (let dirRow of [-1, 0, 1]) {
                 if (dirCol == 0 && dirRow == 0) { continue; }
-                this.flipDiskRecursively(col, row, dirCol, dirRow, color);
+                if (this.get(col + dirCol, row + dirRow) != Reversi.getReverseColor(color)) { continue; }
+                flipCells.push(...this.countFlipCellsRecursively(col, row, dirCol, dirRow, color));
             }
         }
-        if (this.hasFlipped) {
-            // コマが裏返せるなら、その場所に置けるため置く
-            this.set(col, row, color);
-        }
-
-        return this.hasFlipped;
+        return flipCells;
     }
 
-    // (dirCol, dirRow)の方向に裏返せるなら裏返していく
-    // colorは初めに置いたコマの色
-    flipDiskRecursively(col, row, dirCol, dirRow, color) {
-        col += dirCol;
-        row += dirRow;
-        if (this.get(col, row) == Reversi.NONE) { return false; }
-        if (this.get(col, row) == color) { return true; }
-        if (
-            this.get(col, row) == Reversi.getReverseColor(color)      // 現在注目しているコマが、初めに置いたコマと違う色
-            && this.flipDiskRecursively(col, row, dirCol, dirRow, color)    // かつ、その先に初めに置いたコマと同じ色のコマがある場合
-        ) {
-            this.set(col, row, color);                                // 現在注目しているコマを裏返す。
-            this.hasFlipped = true;
-            return true;
+    // col列、row行にcolorの色のコマを置いたとき、(dirCol, dirRow)方向の直線上での裏返されるコマの位置の配列を返す
+    countFlipCellsRecursively(col, row, dirCol, dirRow, color) {
+        switch (this.get(col + dirCol, row + dirRow)) {
+            case Reversi.NONE:
+                return [];
+            case color:
+                return [[col, row]];
+            default:
+                let flipCells = this.countFlipCellsRecursively(col + dirCol, row + dirRow, dirCol, dirRow, color);
+                if (flipCells.length > 0) {
+                    flipCells.push([col, row]);
+                }
+                return flipCells;
         }
-        return false;
     }
 }
 
@@ -154,6 +173,17 @@ class Screen {
 
     showMessage(message) {
         document.getElementById('message').innerText = message;
+    }
+
+    // 配置可能なセルを表示する
+    showPlaceableCells(cells) {
+        let elems = document.getElementsByClassName('cell');
+        for (let elem of elems) {
+            elem.classList.remove('placeable');
+        }
+        for (let [col, row] of cells) {
+            document.getElementById(String(row * Reversi.COL_COUNT + col)).classList.add('placeable');
+        }
     }
 }
 
