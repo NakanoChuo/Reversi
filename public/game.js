@@ -30,6 +30,8 @@ class Reversi {
 
     async play() {
         this.turn = Reversi.BLACK;
+        this.log = [];  // ゲームログ（デバッグ用）
+
         let col, row;
         let prevTurnIsPassed = false;   // 前のターンがパスされたかどうか
         let diskCount = 0;
@@ -64,6 +66,7 @@ class Reversi {
                 this.board.set(flipCol, flipRow, this.turn);    // 裏返していく
             }
             if (flipCells.length > 0) {
+                this.log.push([this.turn, col, row]);   // ゲームログの記録
                 this.turn = Reversi.getReverseColor(this.turn); // 1つでも裏返せたなら次のターンへ
                 diskCount++;
                 if (diskCount >= Reversi.COL_COUNT * Reversi.ROW_COUNT) {   // コマを全て置いたらゲーム終了
