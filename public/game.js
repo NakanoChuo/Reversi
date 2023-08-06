@@ -31,25 +31,57 @@ class Reversi {
     async play() {
         this.turn = Reversi.BLACK;
         let col, row;
+        let prevTurnIsPassed = false;   // 前のターンがパスされたかどうか
+        let diskCount = 0;
         while (true) {
             this.screen.showMessage(`${this.turn == Reversi.BLACK ? '黒' : '白'}の手番`);
 
+            // 配置可能なセルを計算
             let placeableMap = this.board.getPlaceableCells(this.turn);
-            this.screen.showPlaceableCells(
-                Object.keys(placeableMap)
-                    .filter(key => placeableMap[key].length > 0)
-                    .map(key => key.split(',').map(Number))
-            );
 
+            // 配置可能なセルの座標の配列
+            let placeableCells = Object.keys(placeableMap)
+                .filter(key => placeableMap[key].length > 0)
+                .map(key => key.split(',').map(Number));
+            
+            if (placeableCells.length == 0) {       // 配置可能なセルがない場合、パス or ゲーム終了
+                if (prevTurnIsPassed) { break; }    // 前のターンもパスしていた場合、ゲーム終了
+                this.turn = Reversi.getReverseColor(this.turn); // パス
+                prevTurnIsPassed = true;
+                continue;
+            } else {
+                prevTurnIsPassed = false;
+            }
+
+            // 配置可能なセルの表示
+            this.screen.showPlaceableCells(placeableCells);
+
+            // プレイヤーの選択を待つ
             [col, row] = await this.players[this.turn].getChoice(col, row, this.board);
 
-            let flipCells = placeableMap[`${col},${row}`];
+            let flipCells = placeableMap[`${col},${row}`];  // プレイヤーが選んだセルにコマを置いたとき、裏返されるコマの位置
             for (let [flipCol, flipRow] of flipCells) {
-                this.board.set(flipCol, flipRow, this.turn);
+                this.board.set(flipCol, flipRow, this.turn);    // 裏返していく
             }
             if (flipCells.length > 0) {
-                this.turn = Reversi.getReverseColor(this.turn);
+                this.turn = Reversi.getReverseColor(this.turn); // 1つでも裏返せたなら次のターンへ
+                diskCount++;
+                if (diskCount >= Reversi.COL_COUNT * Reversi.ROW_COUNT) {   // コマを全て置いたらゲーム終了
+                    break;
+                }
             }
+        }
+    }
+
+    over() {
+        let blackCount = this.board.countDisks(Reversi.BLACK);
+        let whiteCount = this.board.countDisks(Reversi.WHITE);
+        if (blackCount > whiteCount) {
+            this.screen.showMessage('黒の勝ち');
+        } else if (blackCount < whiteCount) {
+            this.screen.showMessage('白の勝ち');
+        } else {
+            this.screen.showMessage('引き分け');
         }
     }
 }
@@ -88,6 +120,13 @@ class Board {
         if (!this.checkValidIndices(col, row)) { return; }
         this.screen.update(col, row, this.array2d[col][row], color);    // Screenオブジェクトに画面更新を指示
         this.array2d[col][row] = color;
+    }
+
+    countDisks(color) {
+        return this.array2d
+            .reduce((arr1, arr2) => arr1.concat(arr2), [])
+            .filter(cell => cell == color)
+            .reduce(sum => sum + 1, 0);
     }
 
     // コマを置くことができる位置を求める

@@ -38,7 +38,9 @@
             new Controller(),
             new Controller()
         );
-        game.play();
+        game.play().then(() => {
+            game.over()
+        });
     </script>
 </body>
 </html>
