@@ -62,12 +62,14 @@ class Reversi {
             [col, row] = await this.players[this.turn].getChoice(col, row, this.board);
 
             let flipCells = placeableMap[`${col},${row}`];  // プレイヤーが選んだセルにコマを置いたとき、裏返されるコマの位置
-            for (let [flipCol, flipRow] of flipCells) {
-                this.board.set(flipCol, flipRow, this.turn);    // 裏返していく
-            }
-            if (flipCells.length > 0) {
+            if (flipCells.length > 0) { // 1つでも裏返せるなら
+                this.board.set(col, row, this.turn);    // コマを置き
+                for (let [flipCol, flipRow] of flipCells) {
+                    this.board.set(flipCol, flipRow, this.turn);    // 裏返していく
+                }
+
                 this.log.push([this.turn, col, row]);   // ゲームログの記録
-                this.turn = Reversi.getReverseColor(this.turn); // 1つでも裏返せたなら次のターンへ
+                this.turn = Reversi.getReverseColor(this.turn); // 次のターンへ
                 diskCount++;
                 if (diskCount >= Reversi.COL_COUNT * Reversi.ROW_COUNT) {   // コマを全て置いたらゲーム終了
                     break;
@@ -154,7 +156,6 @@ class Board {
         for (let dirCol of [-1, 0, 1]) {
             for (let dirRow of [-1, 0, 1]) {
                 if (dirCol == 0 && dirRow == 0) { continue; }
-                if (this.get(col + dirCol, row + dirRow) != Reversi.getReverseColor(color)) { continue; }
                 flipCells.push(...this.countFlipCellsRecursively(col, row, dirCol, dirRow, color));
             }
         }
@@ -167,10 +168,14 @@ class Board {
             case Reversi.NONE:
                 return [];
             case color:
-                return [[col, row]];
+                if (this.get(col, row) == Reversi.getReverseColor(color)) {
+                    return [[col, row]];
+                } else {
+                    return [];
+                }
             default:
                 let flipCells = this.countFlipCellsRecursively(col + dirCol, row + dirRow, dirCol, dirRow, color);
-                if (flipCells.length > 0) {
+                if (flipCells.length > 0 && this.get(col, row) != Reversi.NONE) {
                     flipCells.push([col, row]);
                 }
                 return flipCells;
