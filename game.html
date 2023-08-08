@@ -35,10 +35,16 @@
     <script src="/player.js"></script>
     <script>
         game = new Reversi();
-        game.setPlayers(
+
+        players = [
             new Controller(),
             new WeakComputer()
-        );
+        ];
+        if (Math.random() < 0.5) {
+            players.reverse();
+        }
+        game.setPlayers(...players);
+        
         game.play().then(() => {
             game.over()
         });

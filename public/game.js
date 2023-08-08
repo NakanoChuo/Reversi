@@ -36,7 +36,7 @@ class Reversi {
         let prevTurnIsPassed = false;   // 前のターンがパスされたかどうか
         let diskCount = 0;
         while (true) {
-            this.screen.showMessage(`${this.turn == Reversi.BLACK ? '黒' : '白'}の手番`);
+            this.screen.showMessage(this.players[this.turn] instanceof Controller ? 'あなたの番です' : '相手が入力中です');
 
             // 配置可能なセルを計算
             let placeableMap = this.board.getPlaceableCells(this.turn);
@@ -61,8 +61,6 @@ class Reversi {
             // プレイヤーの選択を待つ
             [col, row] = await this.players[this.turn].getChoice(col, row, this.board);
 
-            console.log(col, row, this.turn);
-
             let flipCells = placeableMap[`${col},${row}`];  // プレイヤーが選んだセルにコマを置いたとき、裏返されるコマの位置
             if (flipCells.length > 0) { // 1つでも裏返せるなら
                 this.board.set(col, row, this.turn);    // コマを置き
@@ -84,9 +82,9 @@ class Reversi {
         let blackCount = this.board.countDisks(Reversi.BLACK);
         let whiteCount = this.board.countDisks(Reversi.WHITE);
         if (blackCount > whiteCount) {
-            this.screen.showMessage('黒の勝ち');
+            this.screen.showMessage('あなたの勝ち');
         } else if (blackCount < whiteCount) {
-            this.screen.showMessage('白の勝ち');
+            this.screen.showMessage('相手の勝ち');
         } else {
             this.screen.showMessage('引き分け');
         }
