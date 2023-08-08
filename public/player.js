@@ -34,17 +34,19 @@ class Controller extends Player {
 // 弱いAIクラス
 // 盤面を見て最も多くのコマを裏返せる場所を指す
 class WeakComputer extends Player {
-    getChoice(oppositeCol, oppositeRow, board) {
+    async getChoice(oppositeCol, oppositeRow, board) {
         let placeableMap = board.getPlaceableCells(this.color);
         let maxCell;
         Object.keys(placeableMap)
-            .forEach(cell => {
+            .forEach(cell => {  // 多くのコマを裏返せる場所を探す
                 if (maxCell === undefined || placeableMap[maxCell].length < placeableMap[cell].length) {
                     maxCell = cell;
                 }
             });
-        return new Promise(resolve => {
-            setTimeout(() => resolve(maxCell.split(',').map(Number)), 1000);
-        });
+        maxCell = maxCell.split(',').map(Number);
+
+        await new Promise(resolve => setTimeout(resolve, 1000));    // 1秒待つ
+
+        return maxCell;
     }
 }
