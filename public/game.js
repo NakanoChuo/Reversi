@@ -79,15 +79,19 @@ class Reversi {
     }
 
     over() {
-        let blackCount = this.board.countDisks(Reversi.BLACK);
-        let whiteCount = this.board.countDisks(Reversi.WHITE);
-        if (blackCount > whiteCount) {
-            this.screen.showMessage('あなたの勝ち');
-        } else if (blackCount < whiteCount) {
-            this.screen.showMessage('相手の勝ち');
-        } else {
+        // 黒色のコマと白色のコマの数を集計
+        let counts = {}
+        Object.keys(this.players).forEach(color => {counts[color] = this.board.countDisks(color)});
+        if (counts[Reversi.BLACK] == counts[Reversi.WHITE]) {
             this.screen.showMessage('引き分け');
+            return;
         }
+
+        // 数の多い色
+        let winColor = Object.keys(this.players)
+            .sort((color1, color2) => counts[color2] - counts[color1])[0];
+        
+        this.screen.showMessage(this.players[winColor] instanceof Controller ? 'あなたの勝ち' : '相手の勝ち');
     }
 }
 
