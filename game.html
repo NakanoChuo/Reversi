@@ -34,12 +34,32 @@
     <script src="/game.js"></script>
     <script src="/player.js"></script>
     <script>
-        game = new Reversi();
+        const splits = location.pathname.split('/');
+        const gameMode = splits[1];
 
-        players = [
-            new Controller(),
-            new WeakComputer()
-        ];
+        const game = new Reversi();
+
+        let players;
+        switch (gameMode) {
+            case 'online':
+                players = [
+                    new Controller(),
+                    new WeakComputer()
+                ];
+                break;
+            case 'cpu':
+                players = [
+                    new Controller(),
+                    new WeakComputer()
+                ];
+                break;
+            case 'debug':
+                players = [
+                    new Controller(),
+                    new Controller()
+                ];
+                break;
+        }
         if (Math.random() < 0.5) {
             players.reverse();
         }
